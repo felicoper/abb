@@ -16,8 +16,8 @@ char* strdup(const char *anterior) {
 }
 
 typedef struct nodo{
-	struct nodo_t izq;
-	struct nodo_t der;
+	struct nodo *izq;
+	struct nodo *der;
 	const char* clave;
 	void* dato;
 } nodo_t;
@@ -26,20 +26,20 @@ typedef struct nodo{
 struct abb{
 	abb_destruir_dato_t abb_destruir_dato;
 	abb_comparar_clave_t abb_comparar_clave;
-	struct nodo_t raiz;
+	struct nodo *raiz;
 	size_t cantidad;
-}
+};
 
 struct abb_iter{
 	const abb_t *arbol;
 	pila_t *pila;
-}
+};
 
 nodo_t* nodo_crear(const char* clave, void* dato){
 	nodo_t* nodo = malloc(sizeof(nodo_t));
 	if(!nodo) return NULL;
 
-	nodo->i	zq = NULL;
+	nodo->izq = NULL;
 	nodo->der = NULL;
 	nodo->clave = strdup(clave);
 	nodo->dato = dato;
@@ -74,7 +74,11 @@ bool abb_guardar(abb_t *arbol, const char *clave, void *dato){
 		}
 		else if (arbol->abb_comparar_clave(n_guardar->clave,actual->clave)>0){ //va a la rama der
 			actual = actual->der;
-		}
+		} else {
+			actual->dato = n_guardar->dato;
+			free(n_guardar);
+			return true;
+		}	
 	}
 	//Hay que decirle a n_guardar que anterior es su padre.
 	//n_guardar.padre = anterior
@@ -100,8 +104,8 @@ void *abb_obtener(const abb_t *arbol, const char *clave){
 		} else {
 			return actual->dato;
 		}
-	return NULL;
 	}
+	return NULL;
 }
 
 bool abb_pertenece(const abb_t *arbol, const char *clave){
@@ -130,9 +134,7 @@ void *abb_borrar(abb_t *arbol, const char *clave){
 
 	void *dato;	
 
-	if (!abb_pertenece(arbol, clave)){
-		return NULL;
-	}
+	if (!abb_pertenece(arbol, clave))return NULL;
 
 	while(actual){
 		a_borrar_padre = a_borrar;
@@ -143,6 +145,8 @@ void *abb_borrar(abb_t *arbol, const char *clave){
 		}
 		else if (arbol->abb_comparar_clave(clave,actual->clave)>0){ //va a la rama der
 			actual = actual->der;
+		} else {
+			break;
 		}
 	}
 
@@ -207,6 +211,7 @@ void *abb_borrar(abb_t *arbol, const char *clave){
 		free((char*)a_reemplazar->clave);
 		free(a_reemplazar);
 	}
+	arbol->cantidad--;
 	return dato;
 }
 
