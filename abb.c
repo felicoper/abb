@@ -59,8 +59,6 @@ abb_t* abb_crear(abb_comparar_clave_t cmp, abb_destruir_dato_t destruir_dato){
 
 
 bool abb_guardar(abb_t *arbol, const char *clave, void *dato){
-	nodo_t* n_guardar = nodo_crear(clave,dato);
-	if (!n_guardar) return false;
 
 	nodo_t* anterior = NULL;
 	nodo_t* actual = arbol->raiz;
@@ -69,17 +67,23 @@ bool abb_guardar(abb_t *arbol, const char *clave, void *dato){
 	//recorrer hasta buscar posicion
 	while(actual){
 		anterior = actual;
-		if(arbol->abb_comparar_clave(n_guardar->clave,actual->clave)<0){ // va a la rama izq
+		if(arbol->abb_comparar_clave(clave,actual->clave)<0){ // va a la rama izq
 			actual = actual->izq;
 		}
-		else if (arbol->abb_comparar_clave(n_guardar->clave,actual->clave)>0){ //va a la rama der
+		else if (arbol->abb_comparar_clave(clave,actual->clave)>0){ //va a la rama der
 			actual = actual->der;
 		} else {
-			actual->dato = n_guardar->dato;
-			free(n_guardar);
+			if (arbol->abb_destruir_dato){
+				arbol->abb_destruir_dato(actual->dato);
+			}
+			actual->dato = dato;
 			return true;
-		}	
+		}
 	}
+	
+	nodo_t* n_guardar = nodo_crear(clave,dato);
+	if (!n_guardar) return false;
+	
 	//Hay que decirle a n_guardar que anterior es su padre.
 	//n_guardar.padre = anterior
 
@@ -278,8 +282,9 @@ bool abb_iter_in_avanzar(abb_iter_t *iter){
 }
 
 const char *abb_iter_in_ver_actual(const abb_iter_t *iter){
+	if(pila_esta_vacia(iter->pila)) return NULL;
 	nodo_t * actual = pila_ver_tope(iter->pila);
-	return actual->dato;
+	return actual->clave;
 }
 
 bool abb_iter_in_al_final(const abb_iter_t *iter){
